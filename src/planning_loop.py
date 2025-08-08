@@ -8,8 +8,8 @@ import json
 import time
 from typing import Dict, List, Any, Optional
 import logging
-from ai_planner import AICommandPlanner, PlanningResult, CommandStep
-from pty_manager import manager
+from src.ai_planner import AICommandPlanner, PlanningResult, CommandStep, CommandRisk
+from src.pty_manager import manager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,7 +35,15 @@ class PlanningLoop:
             logger.info(f"Iteration {iteration + 1}")
             
             # Generate plan
-            plan = self.planner.planner.generate_plan(goal, context)
+            try:
+                plan = self.planner.planner.generate_plan(goal, context)
+            except Exception as e:
+                logger.error(f"Failed to generate plan: {e}")
+                return {
+                    "status": "planning_failed",
+                    "error": str(e),
+                    "iteration": iteration
+                }
             
             # Check if confirmation needed
             if plan.requires_confirmation:
@@ -47,7 +55,15 @@ class PlanningLoop:
                 }
             
             # Execute plan
-            execution_results = self.planner.executor.execute_plan(plan, session_id)
+            try:
+                execution_results = self.planner.executor.execute_plan(plan, session_id)
+            except Exception as e:
+                logger.error(f"Failed to execute plan: {e}")
+                return {
+                    "status": "execution_failed",
+                    "error": str(e),
+                    "iteration": iteration
+                }
             results.extend(execution_results)
             
             # Check if goal is achieved

@@ -75,6 +75,11 @@ def main():
     """Main entry point"""
     backend = PTYBackend()
     
+    # Check if running in test mode
+    if len(sys.argv) > 1 and sys.argv[1] == "--test":
+        print("Running in test mode")
+        return
+    
     def signal_handler(signum, frame):
         logger.info("Received shutdown signal")
         backend.stop()

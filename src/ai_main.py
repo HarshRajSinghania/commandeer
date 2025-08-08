@@ -8,8 +8,8 @@ import os
 import sys
 import argparse
 import json
-from ai_planner import AICommandPlanner, AISafetyChecker
-from planning_loop import InteractivePlanner, PlanningLoop
+from src.ai_planner import AICommandPlanner, AISafetyChecker
+from src.planning_loop import InteractivePlanner, PlanningLoop
 from pty_manager import manager
 
 def main():
@@ -32,7 +32,8 @@ def main():
     planner.set_pty_manager(manager)
     
     # Create session
-    manager.create_session(args.session)
+    if not manager.get_session(args.session):
+        manager.create_session(args.session)
     
     try:
         if args.interactive:

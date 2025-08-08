@@ -6,9 +6,9 @@ Tests natural language processing, safety filtering, and iterative planning
 
 import os
 import json
-from ai_planner import AICommandPlanner, AISafetyChecker
-from planning_loop import PlanningLoop, InteractivePlanner
-from pty_manager import manager
+from src.ai_planner import AICommandPlanner, AISafetyChecker
+from src.planning_loop import PlanningLoop, InteractivePlanner
+from src.pty_manager import manager
 
 def test_safety_checker():
     """Test safety filtering"""
@@ -43,7 +43,8 @@ def test_basic_planning():
     goal = "create a directory called 'test-dir' and list its contents"
     
     # Create session
-    manager.create_session("test-planning")
+    if not manager.get_session("test-planning"):
+        manager.create_session("test-planning")
     
     try:
         # Test planning loop

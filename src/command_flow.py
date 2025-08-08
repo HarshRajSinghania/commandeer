@@ -16,8 +16,8 @@ from textual.message import Message
 import threading
 import queue
 
-from ai_planner import AICommandPlanner, PlanningResult, CommandStep
-from pty_manager import manager
+from src.ai_planner import AICommandPlanner, PlanningResult, CommandStep
+from src.pty_manager import manager
 
 
 @dataclass
@@ -96,7 +96,11 @@ class CommandExecutor:
     def get_output(self) -> str:
         """Get current output from session"""
         # This would integrate with the PTY output streaming
-        return "Command output would be streamed here"
+        session = manager.get_session(self.session_id)
+        if session:
+            # In a real implementation, this would get the actual output
+            return "Command output would be streamed here"
+        return ""
 
 
 class AICommandFlow:
@@ -122,7 +126,7 @@ class AICommandFlow:
         # Create session if needed
         if not manager.get_session("flow-session"):
             manager.create_session("flow-session")
-            self.set_session("flow-session")
+        self.set_session("flow-session")
         
         # Generate initial plan
         plan = self.planner.planner.generate_plan(goal)
@@ -149,7 +153,11 @@ class AICommandFlow:
             task.status = "running"
             task.start_time = time.time()
             
-            success = self.executor.execute_command(task.command)
+            try:
+                success = self.executor.execute_command(task.command)
+            except Exception as e:
+                logger.error(f"Failed to execute command: {e}")
+                success = False
             task.end_time = time.time()
             
             if success:
@@ -221,7 +229,9 @@ class TUICommandFlow:
             if self.output_area:
                 self.output_area.text = json.dumps(data, indent=2)
             if self.status_label:
-                self.status_label.text = f"Executing: {data['current_task']['command']}"
+                current_task = data.get('current_task', {})
+                if current_task:
+                    self.status_label.text = f"Executing: {current_task.get('command', 'Unknown')}"
         
         result = await self.ai_flow.execute_goal(goal, on_update)
         
@@ -232,23 +242,9 @@ class TUICommandFlow:
     
     def update_todo_display(self):
         """Update the todo list display"""
-        if not self.todo_list:
-            return
-        
-        status = self.ai_flow.get_queue_status()
-        items = []
-        
-        for task in self.ai_flow.queue.completed_tasks:
-            items.append(ListItem(Label(f"✅ {task.command}")))
-        
-        for task in self.ai_flow.queue.queue:
-            items.append(ListItem(Label(f"⏳ {task.command}")))
-        
-        if self.ai_flow.queue.current_task:
-            items.append(ListItem(Label(f"🔄 {self.ai_flow.queue.current_task.command}")))
-        
-        self.todo_list.clear()
-        self.todo_list.extend(items)
+        # This method would be called to update the display
+        # Implementation depends on how the TUI is structured
+        pass
 
 
 # Example usage

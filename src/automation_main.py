@@ -10,7 +10,7 @@ import argparse
 import json
 import asyncio
 from dotenv import load_dotenv
-from command_flow import AICommandFlow
+from src.command_flow import AICommandFlow
 
 def main():
     """Main entry point for automation system"""
@@ -33,6 +33,8 @@ def main():
     
     # Setup AI flow
     flow = AICommandFlow(args.api_key, args.base_url, args.model)
+    if not manager.get_session(args.session):
+        manager.create_session(args.session)
     flow.set_session(args.session)
     
     if args.tui:

@@ -22,10 +22,11 @@ from rich.console import Console
 import websockets
 import threading
 import time
+import os
 
-from ai_planner import AICommandPlanner, AISafetyChecker
-from planning_loop import InteractivePlanner
-from pty_manager import manager
+from src.ai_planner import AICommandPlanner, AISafetyChecker
+from src.planning_loop import InteractivePlanner
+from src.pty_manager import manager
 
 
 class CommandHistory:
@@ -104,6 +105,10 @@ class ProjectTree:
                 subindent = ' ' * 2 * (level + 1)
                 for file in files:
                     self.files.append(f"{subindent}{file}")
+        except PermissionError:
+            self.files = ["Permission denied"]
+        except Exception as e:
+            self.files = [f"Error: {str(e)}"]
         except Exception as e:
             self.files = [f"Error: {str(e)}"]
 
@@ -296,7 +301,8 @@ class VSCodeTUI(App):
     def on_mount(self):
         """Initialize the application"""
         # Create PTY session
-        manager.create_session(self.current_session)
+        if not manager.get_session(self.current_session):
+            manager.create_session(self.current_session)
         
         # Setup AI planner
         api_key = os.getenv("OPENAI_API_KEY", "mock-key")
@@ -312,7 +318,11 @@ class VSCodeTUI(App):
         """Execute natural language command"""
         try:
             # Use AI planner to generate plan
-            plan = self.ai_planner.planner.generate_plan(text)
+            try:
+                plan = self.ai_planner.planner.generate_plan(text)
+            except Exception as e:
+                self.query_one("#output-area").text = f"Error generating plan: {str(e)}"
+                return
             self.todo_list.set_plan(plan)
             
             # Display reasoning

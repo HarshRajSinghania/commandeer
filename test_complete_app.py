@@ -7,9 +7,9 @@ import os
 import sys
 import json
 from dotenv import load_dotenv
-from ai_planner import AICommandPlanner, AISafetyChecker
-from planning_loop import PlanningLoop
-from pty_manager import manager
+from src.ai_planner import AICommandPlanner, AISafetyChecker
+from src.planning_loop import PlanningLoop
+from src.pty_manager import manager
 
 # Load environment variables
 load_dotenv()
@@ -45,7 +45,8 @@ def test_ai_integration():
         planner.set_pty_manager(manager)
         
         # Create test session
-        manager.create_session("test-session")
+        if not manager.get_session("test-session"):
+            manager.create_session("test-session")
         
         # Test basic planning
         plan = planner.planner.generate_plan("list files in current directory")
@@ -76,7 +77,7 @@ def test_tui_integration():
     print("\n🖥️  Testing TUI Integration...")
     
     try:
-        from tui_app import VSCodeTUI
+        from src.tui_app import VSCodeTUI
         app = VSCodeTUI()
         print("✅ TUI app creation successful")
         return True

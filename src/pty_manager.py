@@ -209,7 +209,8 @@ class PTYManager:
     
     def get_session(self, session_id: str):
         """Get a PTY session by ID"""
-        return self.sessions.get(session_id)
+        with self.lock:
+            return self.sessions.get(session_id)
     
     def execute_command(self, session_id: str, command: str) -> bool:
         """Execute command in specified session"""

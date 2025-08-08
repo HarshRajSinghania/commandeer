@@ -10,6 +10,7 @@ import websockets
 import logging
 from typing import Dict, Set
 import uuid
+import time
 
 from pty_manager import manager
 
@@ -106,11 +107,12 @@ class WebSocketHandler:
                         # Set up output callback
                         session = manager.get_session(session_id)
                         if session:
-                            session.add_output_callback(
-                                lambda data: asyncio.create_task(
-                                    self.broadcast_output(session_id, data)
+                            # Create a wrapper function to capture session_id
+                            def make_callback(sid):
+                                return lambda data: asyncio.create_task(
+                                    self.broadcast_output(sid, data)
                                 )
-                            )
+                            session.add_output_callback(make_callback(session_id))
                         
                         await websocket.send(json.dumps({
                             "type": "connected",

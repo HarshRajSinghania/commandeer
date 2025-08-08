@@ -52,31 +52,31 @@ class AISafetyChecker:
     
     DANGEROUS_PATTERNS = [
         (r'\brm\s+-rf\b', 'Recursive force delete'),
-        (r '\brm\s+-rf\s*/', 'Delete root directory'),
-        (r '\bchmod\s+777\b', 'World-writable permissions'),
-        (r '\bchown\s+-R', 'Recursive ownership change'),
-        (r '\bmkfs\b', 'Format filesystem'),
-        (r '\bdd\b', 'Disk destroyer'),
-        (r '\b>\s*/dev/sd', 'Overwrite disk'),
-        (r '\bshutdown\s+-h\s+now', 'Immediate shutdown'),
-        (r '\breboot\b', 'System reboot'),
-        (r '\b:wq!\s*/etc', 'Force write system files'),
-        (r '\bsudo\s+rm\b', 'Privileged delete'),
-        (r '\bfind\s+.+\s+-delete\b', 'Find and delete'),
-        (r '\bchmod\s+[0-7]777\b', 'Overly permissive'),
+        (r'\brm\s+-rf\s*/', 'Delete root directory'),
+        (r'\bchmod\s+777\b', 'World-writable permissions'),
+        (r'\bchown\s+-R', 'Recursive ownership change'),
+        (r'\bmkfs\b', 'Format filesystem'),
+        (r'\bdd\b', 'Disk destroyer'),
+        (r'\b>\s*/dev/sd', 'Overwrite disk'),
+        (r'\bshutdown\s+-h\s+now', 'Immediate shutdown'),
+        (r'\breboot\b', 'System reboot'),
+        (r'\b:wq!\s*/etc', 'Force write system files'),
+        (r'\bsudo\s+rm\b', 'Privileged delete'),
+        (r'\bfind\s+.+\s+-delete\b', 'Find and delete'),
+        (r'\bchmod\s+[0-7]777\b', 'Overly permissive'),
     ]
     
     CAUTION_PATTERNS = [
-        (r '\brm\b', 'File deletion'),
-        (r '\bchmod\b', 'Permission changes'),
-        (r '\bchown\b', 'Ownership changes'),
-        (r '\bmv\b', 'File movement'),
-        (r '\bcp\b', 'File copying'),
-        (r '\bscp\b', 'Remote copying'),
-        (r '\bsudo\b', 'Privileged execution'),
-        (r '\bapt-get\b', 'Package management'),
-        (r '\byum\b', 'Package management'),
-        (r '\bpip\b', 'Python package management'),
+        (r'\brm\b', 'File deletion'),
+        (r'\bchmod\b', 'Permission changes'),
+        (r'\bchown\b', 'Ownership changes'),
+        (r'\bmv\b', 'File movement'),
+        (r'\bcp\b', 'File copying'),
+        (r'\bscp\b', 'Remote copying'),
+        (r'\bsudo\b', 'Privileged execution'),
+        (r'\bapt-get\b', 'Package management'),
+        (r'\byum\b', 'Package management'),
+        (r'\bpip\b', 'Python package management'),
     ]
     
     @classmethod
@@ -203,7 +203,8 @@ Format as JSON:
                 steps.append(step)
             
             # Override risk if any step is dangerous
-            max_risk = max(steps, key=lambda s: ["safe", "caution", "dangerous", "critical"].index(s.risk_level.value))
+            risk_values = ["safe", "caution", "dangerous", "critical"]
+            max_risk = max(steps, key=lambda s: risk_values.index(s.risk_level.value))
             overall_risk = max_risk.risk_level
             
             requires_confirmation = any(step.risk_level in [CommandRisk.DANGEROUS, CommandRisk.CRITICAL] for step in steps)
@@ -265,4 +266,31 @@ class CommandExecutor:
                 "step": i + 1,
                 "command": step.command,
                 "reasoning": step.reasoning,
-                "risk_level": risk.value
+                "risk_level": risk.value,
+                "warnings": warnings,
+                "success": False,
+                "output": ""
+            }
+            
+            # Execute command in PTY session
+            if self.pty_manager.execute_command(session_id, step.command):
+                result["success"] = True
+                result["output"] = "Command executed successfully"
+            else:
+                result["output"] = "Failed to execute command"
+            
+            results.append(result)
+            
+        return results
+class AICommandPlanner:
+    """Main AI command planner that combines OpenAI planning with execution"""
+    
+    def __init__(self, api_key: str, base_url: str = None, model: str = None):
+        self.planner = OpenAIPlanner(api_key, base_url, model)
+        self.executor = CommandExecutor(None)  # Will be set later
+        self.pty_manager = None
+    
+    def set_pty_manager(self, pty_manager):
+        """Set the PTY manager for command execution"""
+        self.pty_manager = pty_manager
+        self.executor.pty_manager = pty_manager
