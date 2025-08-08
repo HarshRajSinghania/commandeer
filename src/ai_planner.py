@@ -52,31 +52,31 @@ class AISafetyChecker:
     
     DANGEROUS_PATTERNS = [
         (r'\brm\s+-rf\b', 'Recursive force delete'),
-        (r'\brm\s+-rf\s*/', 'Delete root directory'),
-        (r'\bchmod\s+777\b', 'World-writable permissions'),
-        (r'\bchown\s+-R', 'Recursive ownership change'),
-        (r'\bmkfs\b', 'Format filesystem'),
-        (r'\bdd\b', 'Disk destroyer'),
-        (r'\b>\s*/dev/sd', 'Overwrite disk'),
-        (r'\bshutdown\s+-h\s+now', 'Immediate shutdown'),
-        (r'\breboot\b', 'System reboot'),
-        (r'\b:wq!\s*/etc', 'Force write system files'),
-        (r'\bsudo\s+rm\b', 'Privileged delete'),
-        (r'\bfind\s+.+\s+-delete\b', 'Find and delete'),
-        (r'\bchmod\s+[0-7]777\b', 'Overly permissive'),
+        (r '\brm\s+-rf\s*/', 'Delete root directory'),
+        (r '\bchmod\s+777\b', 'World-writable permissions'),
+        (r '\bchown\s+-R', 'Recursive ownership change'),
+        (r '\bmkfs\b', 'Format filesystem'),
+        (r '\bdd\b', 'Disk destroyer'),
+        (r '\b>\s*/dev/sd', 'Overwrite disk'),
+        (r '\bshutdown\s+-h\s+now', 'Immediate shutdown'),
+        (r '\breboot\b', 'System reboot'),
+        (r '\b:wq!\s*/etc', 'Force write system files'),
+        (r '\bsudo\s+rm\b', 'Privileged delete'),
+        (r '\bfind\s+.+\s+-delete\b', 'Find and delete'),
+        (r '\bchmod\s+[0-7]777\b', 'Overly permissive'),
     ]
     
     CAUTION_PATTERNS = [
-        (r'\brm\b', 'File deletion'),
-        (r'\bchmod\b', 'Permission changes'),
-        (r'\bchown\b', 'Ownership changes'),
-        (r'\bmv\b', 'File movement'),
-        (r'\bcp\b', 'File copying'),
-        (r'\bscp\b', 'Remote copying'),
-        (r'\bsudo\b', 'Privileged execution'),
-        (r'\bapt-get\b', 'Package management'),
-        (r'\byum\b', 'Package management'),
-        (r'\bpip\b', 'Python package management'),
+        (r '\brm\b', 'File deletion'),
+        (r '\bchmod\b', 'Permission changes'),
+        (r '\bchown\b', 'Ownership changes'),
+        (r '\bmv\b', 'File movement'),
+        (r '\bcp\b', 'File copying'),
+        (r '\bscp\b', 'Remote copying'),
+        (r '\bsudo\b', 'Privileged execution'),
+        (r '\bapt-get\b', 'Package management'),
+        (r '\byum\b', 'Package management'),
+        (r '\bpip\b', 'Python package management'),
     ]
     
     @classmethod
@@ -112,10 +112,10 @@ class AISafetyChecker:
 class OpenAIPlanner:
     """Uses OpenAI API to generate command plans"""
     
-    def __init__(self, api_key: str, base_url: str = None):
+    def __init__(self, api_key: str, base_url: str = None, model: str = None):
         self.api_key = api_key
         self.base_url = base_url or "https://api.openai.com/v1"
-        self.model = "gpt-3.5-turbo"
+        self.model = model or "gpt-3.5-turbo"
         
     def generate_plan(self, user_request: str, context: Dict[str, Any] = None) -> PlanningResult:
         """Generate a command plan from natural language"""
@@ -265,78 +265,4 @@ class CommandExecutor:
                 "step": i + 1,
                 "command": step.command,
                 "reasoning": step.reasoning,
-                "risk_level": risk.value,
-                "warnings": warnings,
-                "output": "",
-                "success": False
-            }
-            
-            # Execute command
-            try:
-                success = self.pty_manager.execute_command(session_id, step.command)
-                if success:
-                    result["success"] = True
-                    result["output"] = "Command executed successfully"
-                else:
-                    result["output"] = "Failed to execute command"
-                    
-            except Exception as e:
-                result["output"] = str(e)
-                
-            results.append(result)
-            
-            # Check success criteria
-            if not result["success"]:
-                logger.warning(f"Step {i+1} failed, stopping execution")
-                break
-                
-        return results
-
-
-class AICommandPlanner:
-    """Main orchestrator for AI command planning"""
-    
-    def __init__(self, api_key: str, base_url: str = None):
-        self.planner = OpenAIPlanner(api_key, base_url)
-        self.executor = None
-    
-    def set_pty_manager(self, pty_manager):
-        """Set the PTY manager for execution"""
-        self.executor = CommandExecutor(pty_manager)
-    
-    def plan_and_execute(self, user_request: str, session_id: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Complete planning and execution workflow"""
-        if not self.executor:
-            raise ValueError("PTY manager not set")
-            
-        # Generate plan
-        plan = self.planner.generate_plan(user_request, context)
-        
-        # Check if confirmation needed
-        if plan.requires_confirmation:
-            return {
-                "status": "confirmation_required",
-                "plan": plan,
-                "message": "Dangerous commands detected. Please review and confirm."
-            }
-        
-        # Execute plan
-        results = self.executor.execute_plan(plan, session_id)
-        
-        return {
-            "status": "completed",
-            "plan": plan,
-            "results": results
-        }
-
-
-if __name__ == "__main__":
-    # Example usage
-    import os
-    
-    api_key = os.getenv("OPENAI_API_KEY", "your-api-key")
-    planner = AICommandPlanner(api_key)
-    
-    # Test with a simple request
-    result = planner.planner.generate_plan("create a new directory called 'test'")
-    print(json.dumps(result.__dict__, indent=2, default=str))
+                "risk_level": risk.value
