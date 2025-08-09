@@ -23,10 +23,13 @@ import websockets
 import threading
 import time
 import os
+import logging
 
-from src.ai_planner import AICommandPlanner, AISafetyChecker
-from src.planning_loop import InteractivePlanner
-from src.pty_manager import manager
+logger = logging.getLogger(__name__)
+
+from .ai_planner import AICommandPlanner, AISafetyChecker
+from .planning_loop import InteractivePlanner
+from .pty_manager import manager
 
 
 class CommandHistory:
@@ -107,8 +110,6 @@ class ProjectTree:
                     self.files.append(f"{subindent}{file}")
         except PermissionError:
             self.files = ["Permission denied"]
-        except Exception as e:
-            self.files = [f"Error: {str(e)}"]
         except Exception as e:
             self.files = [f"Error: {str(e)}"]
 
@@ -259,10 +260,7 @@ class VSCodeTUI(App):
                 # Top Panel - Command Execution
                 Container(
                     Label("⚡ Command Output", classes="panel-title"),
-                    TextArea(
-                        placeholder="Command output will appear here...",
-                        id="output-area"
-                    ),
+                    TextArea(id="output-area"),
                     classes="panel",
                     id="output-panel"
                 ),
@@ -275,10 +273,7 @@ class VSCodeTUI(App):
                         id="command-input"
                     ),
                     Label("🤖 AI Reasoning", classes="panel-title"),
-                    TextArea(
-                        placeholder="AI reasoning will appear here...",
-                        id="reasoning-area"
-                    ),
+                    TextArea(id="reasoning-area"),
                     classes="panel",
                     id="input-panel"
                 )
@@ -306,7 +301,15 @@ class VSCodeTUI(App):
         
         # Setup AI planner
         api_key = os.getenv("OPENAI_API_KEY", "mock-key")
-        self.ai_planner = AICommandPlanner(api_key)
+        base_url = os.getenv("OPENAI_BASE_URL")
+        ai_model = os.getenv("AI_MODEL")
+        
+        # Debug logging
+        logger.info(f"API Key: {api_key[:10]}..." if api_key != "mock-key" else "Using mock key")
+        logger.info(f"Base URL: {base_url}")
+        logger.info(f"AI Model: {ai_model}")
+        
+        self.ai_planner = AICommandPlanner(api_key, base_url, ai_model)
         self.ai_planner.set_pty_manager(manager)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -323,11 +326,20 @@ class VSCodeTUI(App):
             except Exception as e:
                 self.query_one("#output-area").text = f"Error generating plan: {str(e)}"
                 return
-            self.todo_list.set_plan(plan)
+            self.todo_list.set_plan({
+                "steps": [
+                    {
+                        "command": step.command,
+                        "reasoning": step.reasoning,
+                        "risk_level": step.risk_level.value
+                    }
+                    for step in plan.steps
+                ]
+            })
             
             # Display reasoning
-            reasoning_text = "\n".join([f"{step['command']}: {step['reasoning']}" 
-                                      for step in plan.get("steps", [])])
+            reasoning_text = "\n".join([f"{step.command}: {step.reasoning}"
+                                      for step in plan.steps])
             self.query_one("#reasoning-area").text = reasoning_text
             
             # Execute plan
@@ -339,7 +351,7 @@ class VSCodeTUI(App):
             self.query_one("#output-area").text = output_text
             
             # Update history
-            self.history.add_command(text, output_text, result.get("status") == "success")
+            self.history.add_command(text, output_text, getattr(result, "status", "unknown") == "success" if hasattr(result, "status") else result.get("status", "unknown") == "success")
             
         except Exception as e:
             self.query_one("#output-area").text = f"Error: {str(e)}"

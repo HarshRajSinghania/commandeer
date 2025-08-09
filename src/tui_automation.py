@@ -21,6 +21,7 @@ from rich.panel import Panel
 from rich.console import Console
 
 from src.command_flow import AICommandFlow, TUICommandFlow
+from src.pty_manager import manager
 
 class AutomationTUI(App):
     """Complete TUI with AI-driven automation"""

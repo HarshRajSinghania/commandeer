@@ -7,7 +7,11 @@ Provides VS Code-inspired terminal interface
 import os
 import sys
 import argparse
-from tui_app import VSCodeTUI
+from dotenv import load_dotenv
+from src.tui_app import VSCodeTUI
+
+# Load environment variables
+load_dotenv()
 
 def main():
     """Main entry point for TUI application"""

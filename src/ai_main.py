@@ -10,7 +10,7 @@ import argparse
 import json
 from src.ai_planner import AICommandPlanner, AISafetyChecker
 from src.planning_loop import InteractivePlanner, PlanningLoop
-from pty_manager import manager
+from src.pty_manager import manager
 
 def main():
     """Main entry point for AI command planning"""

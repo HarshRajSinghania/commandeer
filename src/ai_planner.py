@@ -242,7 +242,6 @@ class CommandExecutor:
     
     def __init__(self, pty_manager):
         self.pty_manager = pty_manager
-        self.current_session = None
     
     def create_session(self, session_id: str) -> bool:
         """Create a new PTY session"""

@@ -11,6 +11,7 @@ import json
 import asyncio
 from dotenv import load_dotenv
 from src.command_flow import AICommandFlow
+from src.pty_manager import manager
 
 def main():
     """Main entry point for automation system"""

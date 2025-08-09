@@ -8,6 +8,7 @@ import asyncio
 import json
 import time
 import os
+import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, asdict
 from textual.widgets import TextArea, ListView, ListItem, Label
@@ -18,6 +19,9 @@ import queue
 
 from src.ai_planner import AICommandPlanner, PlanningResult, CommandStep
 from src.pty_manager import manager
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @dataclass

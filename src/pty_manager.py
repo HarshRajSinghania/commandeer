@@ -73,17 +73,19 @@ class PTYSession:
         while self.is_running and self.master_fd is not None:
             try:
                 # Check if data is available
-                ready, _, _ = select.select([self.master_fd], [], [], 0.1)
-                
-                if ready:
-                    data = os.read(self.master_fd, 1024)
-                    if data:
-                        decoded_data = data.decode('utf-8', errors='replace')
-                        for callback in self.output_callbacks:
-                            callback(decoded_data)
-                    else:
-                        # EOF reached
-                        break
+                if self.master_fd is not None:
+                    ready, _, _ = select.select([self.master_fd], [], [], 0.1)
+                    
+                    if ready:
+                        if self.master_fd is not None:
+                            data = os.read(self.master_fd, 1024)
+                            if data:
+                                decoded_data = data.decode('utf-8', errors='replace')
+                                for callback in self.output_callbacks:
+                                    callback(decoded_data)
+                            else:
+                                # EOF reached
+                                break
                         
             except OSError:
                 # PTY closed
@@ -106,8 +108,10 @@ class PTYSession:
             if not command.endswith('\n'):
                 command += '\n'
             
-            os.write(self.master_fd, command.encode('utf-8'))
-            return True
+            if self.master_fd is not None:
+                os.write(self.master_fd, command.encode('utf-8'))
+                return True
+            return False
             
         except Exception as e:
             logger.error(f"Failed to execute command: {e}")
@@ -129,8 +133,10 @@ class PTYSession:
             else:
                 return False
             
-            os.write(self.master_fd, control_char)
-            return True
+            if self.master_fd is not None:
+                os.write(self.master_fd, control_char)
+                return True
+            return False
             
         except Exception as e:
             logger.error(f"Failed to send control character: {e}")
@@ -144,8 +150,10 @@ class PTYSession:
         try:
             # Use TIOCSWINSZ to set window size
             winsize = struct.pack('HHHH', rows, cols, 0, 0)
-            fcntl.ioctl(self.master_fd, termios.TIOCSWINSZ, winsize)
-            return True
+            if self.master_fd is not None:
+                fcntl.ioctl(self.master_fd, termios.TIOCSWINSZ, winsize)
+                return True
+            return False
             
         except Exception as e:
             logger.error(f"Failed to resize PTY: {e}")
