@@ -1,6 +1,53 @@
-# Commandeer
+# Terminal AI Agent
 
-Commandeer is an AI-powered command execution system that provides a VS Code-inspired terminal interface for executing natural language commands. It combines persistent PTY sessions with AI planning to safely execute complex tasks.
+Terminal AI Agent is a simplified AI agent that can take tasks, create to-do lists, and execute commands in the terminal. It consolidates all functionality into a single file for easy execution.
+
+## Features
+
+- **AI-Powered Command Planning**: Convert natural language requests into safe shell commands
+- **Persistent PTY Sessions**: Maintain stateful terminal sessions across commands
+- **To-Do List Management**: Automatically generate and update to-do lists for tasks
+- **Safety Checking**: Automatic detection of potentially dangerous commands
+- **Single File Implementation**: All functionality consolidated into one easy-to-use file
+
+## Requirements
+
+- Python 3.8+
+- OpenAI API key
+- Unix-like system (Linux/macOS) for PTY support
+
+## Installation
+
+1. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+2. Set up environment variables:
+```bash
+export OPENAI_API_KEY="your-openai-api-key"
+```
+
+## Usage
+
+```bash
+python terminal_ai_agent.py --goal "create a new directory called 'my-project' and initialize git"
+```
+
+## How It Works
+
+1. Takes a natural language goal as input
+2. Uses AI to generate a step-by-step plan with commands
+3. Creates a to-do list with risk assessment for each command
+4. Executes commands safely in a persistent terminal session
+5. Updates the to-do list in real-time as commands are executed
+6. Provides detailed output and status for each task
+
+## Safety Features
+
+- **Dangerous Command Detection**: Automatically identifies risky commands like `rm -rf /`
+- **User Confirmation**: Requires approval for dangerous operations
+- **Risk Assessment**: Categorizes commands as safe, caution, dangerous, or critical
 
 ## Features
 
